@@ -1,0 +1,35 @@
+
+Development tools required:
+  
+  gengetopt   generates the command line parsing code and help output
+  autotools   configures and checks user's environment for dependencies
+  doxygen     source uses doxygen style comments allowing for doxygen 
+              documentation
+
+
+Command line parsing
+  We use `gengetopt` to generate dcp's cli parsing c code. This tool parses 
+  the 'option_parser.ggo' file, creating the parsing code and --help 
+  output. 
+
+  Note: When updating 'option_parser.ggo', `./bootstrap.sh` must be 
+        rerun before compiling, for changes to take effect. 
+
+
+Generating a Distribution tarball
+
+  ./bootstrap.h
+  ./configure
+  make dist
+
+
+Generating Doxygen HTML documentation
+
+  ./bootstrap.sh
+  doxygen
+  open doc/html/index.html
+
+
+Remove all generated files by bootstrap.sh and AutoTools
+  
+  ./cleanup.sh

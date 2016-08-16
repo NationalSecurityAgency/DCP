@@ -1,0 +1,60 @@
+#
+# dcp's command line argument specification for gengetopt
+#
+# The gengetopt tool will parse this file and output C code to parse the command
+# line, providing --help and --version options as well 
+#
+
+package "dcp"
+version "1.0"
+usage   "dcp [OPTION]... SRC DEST"
+purpose "Calculates digests while copying files and folders"
+
+option  "all"        a  "same as -mstu"     flag    off
+option  "md5"        m  "generate md5"      flag    off
+option  "sha1"       s  "generate sha1"     flag    off
+option  "sha256"     t  "generate sha256"   flag    off
+option  "sha512"     u  "generate sha512"   flag    off
+
+option  "output"     o   "where to write output" string  typestr="FILE" optional
+
+option  "input"      i   "output from a previous run to check for uniqueness"
+    string  typestr="FILE"  optional    multiple
+
+option  "owner"      O   "username to chown new files/dirs" 
+    string  typestr="USER"  optional
+    
+option  "group"      G   "group to chown new files/dirs"
+    string  typestr="GROUP" optional
+    
+option  "cache-size" c   "amount of memory to set aside for caching files"
+    string  typestr="CACHESIZE" optional 
+    
+option  "verbose"    v   "explain what is being done"  flag    off
+
+option  "debug"      D   "output debugging information" flag    off      
+
+
+text "
+
+DESCRIPTION
+
+	dcp is a copy and hash tool to mirror directories and gather stats on each
+	file eliminating the need for multiple passes over the data. dcp supports 
+	copying only differences between snapshots by utilizing the output of a 
+	previous run.
+    
+    See dcp(1) for detailed information.
+                       
+"
+
+text "
+
+ENVIRONMENT VARIABLES
+    
+    dcp responds to the following Environment Variables:
+    
+        DCP_OWNER            Same as --owner or -O
+        DCP_GROUP            Same as --group or -G
+        DCP_CACHE_SIZE       Same as --cache-size or -c
+"

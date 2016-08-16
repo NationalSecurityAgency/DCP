@@ -1,0 +1,13 @@
+
+We utilize Autotools for building
+
+Compile and Install:
+	./configure
+	make
+	make install
+
+
+Libraries that need to be installed:
+
+	libcrypto	 - From OpenSSL
+	libdb-5.3    - Berkeley DB 5.3

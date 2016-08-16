@@ -1,0 +1,255 @@
+﻿.TH DCP 1
+.SH NAME
+dcp \- copy and profile files and directories
+.SH SYNOPSIS
+.B dcp
+[\fIOPTION\fP]... [\fB\-h\fP \fIPATH\fP]
+\fB[\-o\fP \fIPATH\fP] \fISOURCE\fP \fIDEST\fP
+.SH DESCRIPTION
+dcp combines cp, stat, md5sum and shasum to streamline mirroring and gathering
+information about all the files copied. All information gathered is written to 
+an output file. The output file can be fed back into dcp when copying 
+snapshots of a directory, this allows only files which differ in location or 
+hash to be copied.
+.SH OPTIONS
+.TP
+.BR \-a ", "\-\-all
+same as \fB\-stu\fP
+.TP
+.BR \-m ", "\-\-md5
+calculate the md5 hash for all regular files. If \fB\-h\fP is specified the md5
+will be calculated
+.TP
+.BR \-s ", "\-\-sha1
+calculate the sha1 hash for all regular files
+.TP
+.BR \-t ", "\-\-sha256
+calculate the sha256 hash for all regular files
+.TP
+.BR \-u ", "\-\-sha512
+calculate the sha512 hash for all regular files
+.TP
+.BR \-o ", "\-\-output=\fIPATH\fP
+file to write profile information to, will append if PATH exists
+.TP
+.BR \-i ", "\-\-input=\fIPATH\fP
+results from a previous run
+.TP
+.BR \-O ", "\-\-owner=\fIUSER\fP
+username to chown new files to
+.TP
+.BR \-G ", "\-\-group=\fIGROUP\fP
+group name to chown new files to
+.TP
+.BR \-v ", "\-\-verbose
+explain what is being done
+.TP
+.BR \-c ", "\-\-cache\-size=\fISIZE\fP
+amount of memory to set aside for caching files
+.TP
+.BR \-D ", "\-\-debug
+when logging output debugging information (source and line #)
+.SH ENVIRONMENT
+.P
+dcp responds to the following Environment variables. When parsing
+precedence is as follows cmd line args > envi vars > default vals.
+.TP
+.BR DCP_OWNER
+if set the username that all new files and directories will belong, overridden
+by \fB\-O\fP/\fB\-\-owner\fP
+.TP
+.BR DCP_GROUP
+if set the group name that all new files and directories will belong,
+overridden by \fB\-G\fP/\fB\-\-group\fP
+.TP
+.BR DCP_CACHE_SIZE
+How much memory should be set aside for caching files in memory, ignored if 
+\fB\-c\fP/\fB\-\-cache\-size\fP is set  
+.SH INPUT
+dcp can limit what files are copied by using the output of a previous run. The
+idea is a previous run of sfcp copied the current partition and the current run
+is to copy just the differences from a snapshot of the system. Multiple input 
+files can be specified with the \-i/\-\-input option by supplying a comma 
+separated list or providing multiple \-i args.
+.SH OUTPUT FORMAT
+dcp's output is simply a newline separated file of json objects. There are two
+types of lines in the file, Metadata and file Entry. Metadata lines provide
+context to how and when dcp was run, while Entries provide information on
+every single file that was seen while copying.
+.PP
+Metadata lines are of the format "#KEY\\tVALUE\\n". KEY and VALUE are
+strings with '\\t' and '\\n' escaped with "\\\\t" and "\\\\n".
+.PP
+File Entry lines are a json object, described below in \fBOUTPUT JSON
+SCHEMA\fP. Each file found during the copy has an entry in the output, even if
+dcp cannot process it. The following states can occur
+.TP
+.BR FILE_FAILED
+Processing failed, see dcp's error output for more information.
+.TP
+.BR FILE_COPIED
+dcp successfully copied the file to the specified destination.
+.TP
+.BR DIR_CREATED
+Successfully created the directory.
+.TP
+.BR DIR_FAILED
+An error occured attempting to create the directory.
+.TP
+.BR SYMLINK_CREATED
+Successfully copied the symlink.
+.TP
+.BR SPECIAL_CREATED
+Successfully copied a block, character, socket or fifo file.
+.SH CACHE SIZE
+dcp sets aside memory to store the bytes from files that it is reading. The
+larger the buffer the fewer number of files that must be read more than once. To
+combat this dcp allows a user to set a "cache size". By default 32KiB is used.
+The \-\-cache\-size argument responds the following suffixes ['','b','k','m',
+'g'], case\-insensitive. Ex setting cache to 512Mib becomes "\-c 512m".
+.SH EXAMPLES
+Use dcp to mirror the contents of 'dir1' to '/dest' while generating the
+md5 & sha1's for each file.
+.PP
+.nf
+.RS
+sfcp \-ms \-o /dest/dir1.dcp /media/dir1 /dest/dir1 2> /backup/dir1.log
+.RE
+.fi
+.PP
+Using the results above run dcp on a snapshot 'sndir1' only copying
+files that are different or didn't exist in main.
+.PP
+.nf
+.RS
+sfcp \-i /dest/dir1.dcp \\
+  /media/sndir1 /dest/snapshot1 2> /backup/snapshotdir1.log
+.RE
+.fi
+.PP
+Multiple results can be specified as follows
+.PP
+.nf
+.RS
+sfcp \-i dir1.dcp  \-i dir2.dcp \\
+  /media/dir3 /dest/dir3 2> /backup/part3.log
+.RE
+.fi
+.PP
+
+The first example above will copy all the files in 'dir1' to the
+destination directory. It will store the hashes and file attributes in 
+'dir1.dcp'. In the second run all new/modified files that were in the 
+snapshot will be copied and their attributes and hashes will be written to 
+dcp.out. Note that the second run didn't specify what digests to calculate, if 
+input is provided only the hashes in the input file will be calculated.
+.SH SEE ALSO
+cp(1), rsync(1), stat(2)
+.SH OUTPUT JSON SCHEMA
+The output format of a File Entry is described below
+.PP
+.nf
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "DCP's File Entry Schema",
+  "type":  "object",
+  "properties": {
+    "path": {
+              "type": "string",
+       "description": "file path from partition root"
+    },
+    "pathhex": {
+             "type": "string",
+      "description": "hex of the path, used instead of 'path' if it contains invalid UTF-8 bytes"
+    },
+    "pathmd5": {
+             "type": "string",
+      "description": "hex md5 of path"
+    },
+    "md5": {
+             "type": "string",
+      "description": "hex md5 of regular file"
+    },
+    "sha1": {
+             "type": "string",
+      "description": "hex sha1 of regular file"
+    },
+    "sha256": {
+             "type": "string",
+      "description": "hex sha256 of regular file"
+    },
+    "sha512": {
+             "type": "string",
+      "description": "hex sha512 of regular file"
+    },
+    "uid": {
+             "type": "number",
+      "description": "file's user id"
+    },
+    "gid": {
+             "type": "number",
+      "description": "file's group id"
+    },
+    "mode": {
+             "type": "number",
+      "description": "file's st_mode see stat(2)"
+    },
+    "size": {
+             "type": "number",
+      "description": "file's st_size see stat(2)"
+    },
+    "asec": {
+             "type": "number",
+      "description": "access time, st_atim.tv_sec, see stat(2)",
+          "minimum": 0
+    },
+    "ansec": {
+             "type": "number",
+      "description": "access time, st_atim.tv_nsec, see stat(2)",
+          "minimum": 0
+    },
+    "msec": {
+             "type": "number",
+      "description": "modification time, st_mtim.tv_sec, see stat(2)",
+          "minimum": 0
+    },
+    "mnsec": {
+             "type": "number",
+      "description": "modification time, st_mtim.tv_nsec, see stat(2)",
+          "minimum": 0
+    },
+    "csec": {
+             "type": "number",
+      "description": "status change time, st_ctim.tv_sec, see stat(2)",
+          "minimum": 0
+    },
+    "cnsec": {
+             "type": "number",
+      "description": "status change time, st_ctim.tv_nsec, see stat(2)",
+          "minimum": 0
+    },
+    "type": {
+      "enum": [
+        "reg", "dir", "lnk", "chr", "blk", "fifo", "sock", "unkn"
+      ],
+      "description": "file type extracted from st_mode, see stat(2)"
+    },
+    "state": {
+      "enum": [
+        "FILE_COPIED", "FILE_FAILED", "DIR_CREATED", "SYMLINK_CREATED", 
+        "SPECIAL_CREATED", "DIR_FAILED"
+      ],
+      "description": "what is the state after the file was processed"
+    },
+    "elapsed": {
+             "type": "number",
+      "description": "number of milliseconds it took to process the file"
+    }
+  },
+  "requred": [
+     "pathmd5", "uid", "gid", "size", "asec", "ansec", "msec",
+     "mnsec", "csec", "cnsec"," type", "state"
+  ],
+  "additionalProperties": false
+}
+.fi
