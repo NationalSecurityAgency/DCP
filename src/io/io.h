@@ -16,6 +16,7 @@
 #include "io_entry.h"
 #include "io_metadata.h"
 #include "io_index.h"
+#include "io_xattr.h"
 
 
 #endif

@@ -56,7 +56,8 @@ int io_entry_read(entry_t *entry, FILE *in, size_t *line);
  * @return              0 on success, -1 on error
  */
 int io_entry_write_fields(const char *state, const char *path,
-        const struct stat *st, const void *pathmd5, const void *md5,
+        const struct stat *st, const void *pathmd5, const char *symlinkpath,
+        const void *md5,
         const void *sha1, const void *sha256, const void *sha512,
         long process_time, FILE *stream);
 

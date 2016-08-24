@@ -65,6 +65,8 @@ struct mainopts {
     size_t inputcount;      /**< # input files specified                      */
     FILE *outputstream;     /**< where we should write results to             */
     char *outfilename;      /**< the output file that outputstream is writing */
+    FILE *xattroutputstream;/**< where we should write xattr results to       */
+    char *xattroutfilename; /**< the output file that xattroutputstream is writing to */
 
     uid_t uid;              /**< id of who will own the copies                */
     gid_t gid;              /**< id of what group will own the copies         */
@@ -95,6 +97,8 @@ static int print_metadata(FILE *out, const char *version, int argc,
 static int    parse_digests(const struct cmdline_info *info);
 static FILE  *parse_outputstream(const struct cmdline_info *info,
         char **outfilename);
+static FILE  *parse_xattroutputstream(const struct cmdline_info *info,
+		char **xattroutfilename);
 static gid_t  parse_group(const struct cmdline_info *info, char **name);
 static uid_t  parse_owner(const struct cmdline_info *info, char **name);
 static size_t parse_cache_size(const struct cmdline_info *info);
@@ -201,6 +205,10 @@ FILE *parse_outputstream(const struct cmdline_info *info, char **outfilename)
         if ((stream = fopen(info->output_arg, "w")) == NULL)
             log_crit(EXIT_FAILURE,"failed to open output file '%s'",
                     info->output_arg);
+
+        if (fchown(fileno(stream), parse_owner(info, NULL), parse_group(info, NULL)) == -1)
+                	warnx("Unable to change owner of DCP out file.");
+
         *outfilename = strdup(info->output_arg);
     }
 
@@ -217,6 +225,53 @@ FILE *parse_outputstream(const struct cmdline_info *info, char **outfilename)
             else
                 log_crit(EXIT_FAILURE, "cannot create output file '%s'", name);
         }
+
+        if (fchown(fd, parse_owner(info, NULL), parse_group(info, NULL)) == -1)
+        	warnx("Unable to change owner of DCP out file.");
+
+        if ((stream = fdopen(fd, "a")) == NULL)
+            log_crit(EXIT_FAILURE, "cannot create output stream");
+        *outfilename = strdup(name);
+    }
+
+    return stream;
+}
+
+FILE *parse_xattroutputstream(const struct cmdline_info *info, char **outfilename)
+{
+    int fd;
+    size_t i;
+    char name[38];  /* enough space to hold "dcp(1234567890).xattr.out\0" */
+    FILE *stream;
+
+    if (info->xattr_given)
+    {
+        if ((stream = fopen(info->xattr_arg, "w")) == NULL)
+            log_crit(EXIT_FAILURE,"failed to open output file '%s'",
+                    info->xattr_arg);
+
+        if (fchown(fileno(stream), parse_owner(info, NULL), parse_group(info, NULL)) == -1)
+                	warnx("Unable to change owner of DCP out file.");
+
+        *outfilename = strdup(info->xattr_arg);
+    }
+
+    /* if no output is specified create an dcp.xattr.out in cwd */
+    else
+    {
+        snprintf(name, sizeof(name), "dcp.xattr.out");
+        i = 0;
+        while ((fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0666)) == -1)
+        {
+            if (errno == EEXIST)
+                snprintf(name, sizeof(name), "dcp(%zu).xattr.out", ++i);
+
+            else
+                log_crit(EXIT_FAILURE, "cannot create output file '%s'", name);
+        }
+
+        if (fchown(fd, parse_owner(info, NULL), parse_group(info, NULL)) == -1)
+        	warnx("Unable to change owner of DCP XATTR out file.");
 
         if ((stream = fdopen(fd, "a")) == NULL)
             log_crit(EXIT_FAILURE, "cannot create output stream");
@@ -296,6 +351,7 @@ int mainopts_parse(struct mainopts *opts, const struct cmdline_info *info)
     opts->dest           = opts->files[opts->filecount];
     opts->digests        = parse_digests(info);
     opts->outputstream   = parse_outputstream(info, &opts->outfilename);
+    opts->xattroutputstream = parse_xattroutputstream(info, &opts->xattroutfilename);
     opts->inputs         = (const char **) info->input_arg;
     opts->inputcount     = info->input_given;
     opts->uid            = parse_owner(info, &opts->username);
@@ -309,9 +365,11 @@ int mainopts_parse(struct mainopts *opts, const struct cmdline_info *info)
 void mainopts_cleanup(struct mainopts *opts)
 {
     if (opts->outfilename  != NULL)     free(opts->outfilename);
+    if (opts->xattroutfilename != NULL) free(opts->xattroutfilename);
     if (opts->username     != NULL)     free(opts->username);
     if (opts->groupname    != NULL)     free(opts->groupname);
     if (opts->outputstream != NULL)     fclose(opts->outputstream);
+    if (opts->xattroutputstream != NULL) fclose(opts->xattroutputstream);
 }
 
 
@@ -339,9 +397,10 @@ int dcp_main(const struct mainopts *opts, int argc, const char *argv[])
 
     /* output information about this run of dcp */
     print_metadata(opts->outputstream, VERSION, argc, argv, opts, digests);
+    print_metadata(opts->xattroutputstream, VERSION, argc, argv, opts, digests);
 
     /* setup how and where to send the data gathered during this run */
-    if (io_dcp_processor_ctx_create(&ctx, opts->outputstream) == -1)
+    if (io_dcp_processor_ctx_create(&ctx, opts->outputstream, opts->xattroutputstream) == -1)
         log_critx(EXIT_FAILURE, "cannot instantiate output context");
 
     /* set the options struct */

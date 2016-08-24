@@ -19,13 +19,16 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <malloc.h>
+#include <sys/xattr.h>
+#include <stdio.h>
+
 #include "process.h"
 #include "../digest.h"
 #include "../fd.h"
 #include "../index/index.h"
 #include "../logging.h"
 #include "dcp.h"
-
 
 /* Type Defs ******************************************************************/
 
@@ -160,7 +163,7 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
     if ((s = open(oldpath, O_RDONLY)) == -1)
     {
         log_error("cannot open '%s'", oldpath);
-        opts->callback(DCP_FAILED, pathmd5, dapath, oldst, NULL, NULL, NULL,
+        opts->callback(DCP_FAILED, pathmd5, dapath, oldst, oldpath, NULL, NULL, NULL, NULL,
                 NULL, -1, opts->callback_ctx);
         return -1;
     }
@@ -180,7 +183,7 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
         if (valid_len < 0)
         {
             log_debugx("failed copying and hashing '%s'", oldpath);
-            opts->callback(DCP_FAILED, pathmd5, dapath, oldst, NULL, NULL,
+            opts->callback(DCP_FAILED, pathmd5, dapath, oldst, oldpath, NULL, NULL, NULL,
                     NULL, NULL, -1, opts->callback_ctx);
             ret = -1;
             goto cleanup;
@@ -192,7 +195,7 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
         diff = ((clock() - start) * 1000) / CLOCKS_PER_SEC;
 
         /* finally send the information to the file processor */
-        opts->callback(DCP_FILE_COPIED, pathmd5, dapath, oldst,
+        opts->callback(DCP_FILE_COPIED, pathmd5, dapath, oldst, oldpath, NULL,
                 digesterset_get_value(&dgstset, DGST_MD5),
                 digesterset_get_value(&dgstset, DGST_SHA1),
                 digesterset_get_value(&dgstset, DGST_SHA256),
@@ -208,7 +211,7 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
                 opts->buffer_size)) == -1)
         {
             log_debugx("cannot calculate hashes for '%s'", oldpath);
-            opts->callback(DCP_FAILED, pathmd5, dapath, oldst, NULL, NULL,
+            opts->callback(DCP_FAILED, pathmd5, dapath, oldst, oldpath, NULL, NULL, NULL,
                     NULL, NULL, -1, opts->callback_ctx);
             ret = -1;
             goto cleanup;
@@ -259,7 +262,7 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
         diff = ((clock() - start) * 1000) / CLOCKS_PER_SEC;
 
         /* finally send the information to the file processor */
-        opts->callback(state, pathmd5, dapath, oldst,
+        opts->callback(state, pathmd5, dapath, oldst, oldpath, NULL,
                 digesterset_get_value(&dgstset, DGST_MD5),
                 digesterset_get_value(&dgstset, DGST_SHA1),
                 digesterset_get_value(&dgstset, DGST_SHA256),

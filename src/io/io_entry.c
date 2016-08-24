@@ -315,7 +315,7 @@ int io_entry_read(entry_t *entry, FILE *in, size_t *line)
  * out, there is a large overhead cost. Since we control the data only use
  * jansson to escape the strings we cannot control. */
 int io_entry_write_fields(const char *state, const char *path,
-        const struct stat *st, const void *pathmd5, const void *md5,
+        const struct stat *st, const void *pathmd5, const char *symlinkpath, const void *md5,
         const void *sha1, const void *sha256, const void *sha512,
         long elapsed, FILE *stream)
 {
@@ -404,6 +404,35 @@ int io_entry_write_fields(const char *state, const char *path,
     if (elapsed > -1)
         fprintf(stream, "\"elapsed\":%ld,", elapsed);
 
+    /* Print out symlink destination if we have it */
+	if (symlinkpath != NULL) {
+		/* SYMLINKPATH and SYMLINKPATHHEX, we prefer to output SYMLINKPATH which is a valid
+		 * UTF-8 JSN escaped string, however if we come across a path with invalid utf-8
+		 * we still need a way to output it. */
+		if ((escaped = json_string(symlinkpath)) != NULL)
+		{
+			fputs("\"symlinkTarget\":", stream);
+			/*
+			 * JSON_ENCODE_ANY tell jansson to write any json type to stream not
+			 * 				   just Objects and Arrays
+			 */
+			json_dumpf(escaped, stream, JSON_ENCODE_ANY);
+			json_decref(escaped);
+			fprintf(stream, ",");
+		}
+		else /* jansson was unable to handle the string */
+		{
+			len = strlen(symlinkpath);
+			if ((len * 2 + 1) > MAX_LENGTH)
+			{
+				log_errorx("buffer too small, expected string with length < %d, "
+						"for non valid utf-8 path string: '%s'", MAX_LENGTH, symlinkpath);
+				ret = -1;
+				goto cleanup;
+			}
+		}
+	}
+
     /* PATH and PATHHEX, we prefer to output PATH which is a valid UTF-8 JSON
      * escaped string, however if we come across a path with invalid utf-8 we
      * still need a way to output it. */
@@ -431,6 +460,7 @@ int io_entry_write_fields(const char *state, const char *path,
         unpack(buf, path, len);
         fprintf(stream, "\"pathhex\":\"%s\",", buf);
     }
+
 
 cleanup:
     /* print a newline our record separator */

@@ -50,7 +50,7 @@ typedef struct io_dcp_processor_ctx io_dcp_processor_ctx_t;
  * @return                  0 on success
  */
 int io_dcp_processor(dcp_state_t state, const void *pathmd5,
-        const char *path, const struct stat *st, const void *md5,
+        const char *dapath, const struct stat *st, const char *accesspath, const char *symlinkpath, const void *md5,
         const void *sha1, const void *sha256, const void *sha512,
         unsigned long process_time, void *context);
 
@@ -63,7 +63,7 @@ int io_dcp_processor(dcp_state_t state, const void *pathmd5,
  *
  * @return                  0 on success
  */
-int io_dcp_processor_ctx_create(io_dcp_processor_ctx_t **ctx, FILE *stream);
+int io_dcp_processor_ctx_create(io_dcp_processor_ctx_t **ctx, FILE *stream, FILE *xattrstream);
 
 
 /**

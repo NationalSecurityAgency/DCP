@@ -374,7 +374,7 @@ void process(file_t *newdir, const char *newpath, FTSENT *ent,
             state  = DCP_DIR_FAILED;
         }
 
-        popts->callback(state, pathmd5, dapath, ent->fts_statp, NULL, NULL,
+        popts->callback(state, pathmd5, dapath, ent->fts_statp, ent->fts_accpath, NULL, NULL, NULL,
                 NULL, NULL, -1, popts->callback_ctx);
         break;
     }
@@ -416,7 +416,7 @@ void process(file_t *newdir, const char *newpath, FTSENT *ent,
                                                 /* Errors                 */
     case FTS_ERR:
     {
-        popts->callback(DCP_FAILED, pathmd5, dapath, NULL, NULL, NULL, NULL,
+        popts->callback(DCP_FAILED, pathmd5, dapath, NULL, NULL, NULL, NULL, NULL, NULL,
                 NULL, -1, popts->callback_ctx);
         errno = ent->fts_errno;
         log_error("fts_read '%s'", ent->fts_path);
@@ -425,7 +425,7 @@ void process(file_t *newdir, const char *newpath, FTSENT *ent,
 
     case FTS_NS:
     {
-        popts->callback(DCP_FAILED, pathmd5, dapath, NULL, NULL, NULL, NULL,
+        popts->callback(DCP_FAILED, pathmd5, dapath, NULL, NULL, NULL, NULL, NULL, NULL,
                 NULL, -1, popts->callback_ctx);
         errno = ent->fts_errno;
         log_error("cannot stat '%s'", ent->fts_path);
@@ -434,7 +434,7 @@ void process(file_t *newdir, const char *newpath, FTSENT *ent,
 
     case FTS_DNR:
     {
-        popts->callback(DCP_FAILED, pathmd5, dapath, NULL, NULL, NULL, NULL,
+        popts->callback(DCP_FAILED, pathmd5, dapath, NULL, NULL, NULL, NULL, NULL, NULL,
                 NULL, -1, popts->callback_ctx);
         errno = ent->fts_errno;
         log_error("cannot read dir '%s'", ent->fts_path);
