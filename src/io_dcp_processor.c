@@ -52,8 +52,8 @@ int io_dcp_processor(dcp_state_t state, const void *pathmd5,
     struct io_dcp_processor_ctx *ctx = context;
     process_xattrs(pathmd5, accesspath, ctx->xattrout);
 
-    return io_entry_write_fields(dcp_strstate(state), dapath, st,
-            pathmd5, symlinkpath, md5, sha1, sha256, sha512, process_time, ctx->out);
+    return io_entry_write_fields(dcp_strstate(state), dapath, st, pathmd5,
+            symlinkpath, md5, sha1, sha256, sha512, process_time, ctx->out);
 }
 
 

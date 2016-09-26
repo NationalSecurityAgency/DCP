@@ -163,8 +163,8 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
     if ((s = open(oldpath, O_RDONLY)) == -1)
     {
         log_error("cannot open '%s'", oldpath);
-        opts->callback(DCP_FAILED, pathmd5, dapath, oldst, oldpath, NULL, NULL, NULL, NULL,
-                NULL, -1, opts->callback_ctx);
+        opts->callback(DCP_FAILED, pathmd5, dapath, oldst, oldpath, NULL, NULL,
+                NULL, NULL, NULL, -1, opts->callback_ctx);
         return -1;
     }
 
@@ -185,8 +185,8 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
         if (valid_len < 0)
         {
             log_debugx("failed copying and hashing '%s'", oldpath);
-            opts->callback(DCP_FAILED, pathmd5, dapath, oldst, oldpath, NULL, NULL, NULL,
-                    NULL, NULL, -1, opts->callback_ctx);
+            opts->callback(DCP_FAILED, pathmd5, dapath, oldst, oldpath, NULL,
+                    NULL, NULL, NULL, NULL, -1, opts->callback_ctx);
             ret = -1;
             goto cleanup;
         }
@@ -212,8 +212,8 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
                 opts->buffer_size)) == -1)
         {
             log_debugx("cannot calculate hashes for '%s'", oldpath);
-            opts->callback(DCP_FAILED, pathmd5, dapath, oldst, oldpath, NULL, NULL, NULL,
-                    NULL, NULL, -1, opts->callback_ctx);
+            opts->callback(DCP_FAILED, pathmd5, dapath, oldst, oldpath, NULL,
+                    NULL, NULL, NULL, NULL, -1, opts->callback_ctx);
             ret = -1;
             goto cleanup;
         }
@@ -240,9 +240,11 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
             }
         }
 
-        /* if cache_n_digest was able to store the whole file in the buffer then
+        /*
+         * if cache_n_digest was able to store the whole file in the buffer then
          * we do not need to seek to the beginning of the fd and reread the
-         * bytes */
+         * bytes
+         */
         if (valid_len == oldst->st_size)
         {
             datastream.bytes = opts->buffer;
