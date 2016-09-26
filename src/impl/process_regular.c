@@ -106,7 +106,7 @@ static int copy_fd(int dirfd, const char *pathname, struct stream *stream,
  *
  * @return          number of bytes that are valid in buf, -1 on error
  */
-static ssize_t cache_n_digest(digesterset_t *set, int fd, void *buf, 
+static ssize_t cache_n_digest(digesterset_t *set, int fd, void *buf,
         size_t blen);
 
 /**
@@ -173,8 +173,10 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
     /* ensure we create the hash needed for the and index */
     digesterset_create(&dgstset, opts->digests | idxkeytype);
 
-    /* there is no index to check against, just copy and digest at the same
-     * time */
+    /*
+     * there is no index to check against, just copy and digest at the same
+     * time
+     */
     if (opts->index == NULL)
     {
         valid_len = copy_n_digest(newdir->fd, newpath, opts->uid, opts->gid,
@@ -205,7 +207,6 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
     }
     else
     {
-
         /* read in the file and calculate the desired digests */
         if ((valid_len = cache_n_digest(&dgstset, s, opts->buffer,
                 opts->buffer_size)) == -1)
@@ -229,8 +230,8 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
                 ret = -1;
                 goto cleanup;
 
+            /* we have seen this file, skip it */
             case INDEX_SUCCESS:
-                /* we have seen this file, skip it */
                 ret = 0;        /* set ret to success */
                 goto cleanup;
 
@@ -283,7 +284,7 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
 /* Private Impl ***************************************************************/
 
 
-int copy_fd(int dirfd, const char *pathname, struct stream *stream, uid_t uid, 
+int copy_fd(int dirfd, const char *pathname, struct stream *stream, uid_t uid,
         gid_t gid)
 {
     int d;

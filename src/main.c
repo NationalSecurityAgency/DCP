@@ -205,10 +205,6 @@ FILE *parse_outputstream(const struct cmdline_info *info, char **outfilename)
         if ((stream = fopen(info->output_arg, "w")) == NULL)
             log_crit(EXIT_FAILURE,"failed to open output file '%s'",
                     info->output_arg);
-
-        if (fchown(fileno(stream), parse_owner(info, NULL), parse_group(info, NULL)) == -1)
-                	warnx("Unable to change owner of DCP out file.");
-
         *outfilename = strdup(info->output_arg);
     }
 
@@ -225,10 +221,6 @@ FILE *parse_outputstream(const struct cmdline_info *info, char **outfilename)
             else
                 log_crit(EXIT_FAILURE, "cannot create output file '%s'", name);
         }
-
-        if (fchown(fd, parse_owner(info, NULL), parse_group(info, NULL)) == -1)
-        	warnx("Unable to change owner of DCP out file.");
-
         if ((stream = fdopen(fd, "a")) == NULL)
             log_crit(EXIT_FAILURE, "cannot create output stream");
         *outfilename = strdup(name);
@@ -249,10 +241,6 @@ FILE *parse_xattroutputstream(const struct cmdline_info *info, char **outfilenam
         if ((stream = fopen(info->xattr_arg, "w")) == NULL)
             log_crit(EXIT_FAILURE,"failed to open output file '%s'",
                     info->xattr_arg);
-
-        if (fchown(fileno(stream), parse_owner(info, NULL), parse_group(info, NULL)) == -1)
-                	warnx("Unable to change owner of DCP out file.");
-
         *outfilename = strdup(info->xattr_arg);
     }
 
@@ -269,10 +257,6 @@ FILE *parse_xattroutputstream(const struct cmdline_info *info, char **outfilenam
             else
                 log_crit(EXIT_FAILURE, "cannot create output file '%s'", name);
         }
-
-        if (fchown(fd, parse_owner(info, NULL), parse_group(info, NULL)) == -1)
-        	warnx("Unable to change owner of DCP XATTR out file.");
-
         if ((stream = fdopen(fd, "a")) == NULL)
             log_crit(EXIT_FAILURE, "cannot create output stream");
         *outfilename = strdup(name);
@@ -441,10 +425,10 @@ index_t *build_index(int digests, const char *paths[], size_t count)
     digest_t type;
     size_t i;
 
-	/* assign type to the first valid one we find, checking md5 then sha1 ... */
-	if (  !(type = digests & DGST_MD5)    && !(type = digests & DGST_SHA1) &&
-		  !(type = digests & DGST_SHA256) && !(type = digests & DGST_SHA512))
-		log_critx(EXIT_FAILURE, "corrput parsing of digest types from inputs");
+    /* assign type to the first valid one we find, checking md5 then sha1 ... */
+    if (  !(type = digests & DGST_MD5)    && !(type = digests & DGST_SHA1) &&
+          !(type = digests & DGST_SHA256) && !(type = digests & DGST_SHA512))
+        log_critx(EXIT_FAILURE, "corrput parsing of digest types from inputs");
 
     if (index_create(&idx, type) != 0)
         log_critx(EXIT_FAILURE, "cannot create index");
@@ -498,8 +482,8 @@ int prepare(const char **files, size_t count, const char *dest, char **newdest)
                 {
                     name = basename(path);
                     /* build the dest/name path including the slash if needed */
-                    if(asprintf(&fulldest, "%s%s%s",
-                            dest, dest[strlen(dest)-1] == '/'? "" : "/", name) < 0)
+                    if(asprintf(&fulldest, "%s%s%s", dest,
+                        dest[strlen(dest)-1] == '/'? "" : "/", name) < 0)
                     {
                         fulldest = NULL;
                     }
@@ -550,7 +534,7 @@ int print_metadata(FILE *out, const char *version, int argc,
 
     /* current working directory */
     if ((cwd = getcwd(NULL, 0)) == NULL)
-    	log_warn("cannot retrieve current working directory");
+        log_warn("cannot retrieve current working directory");
 
     /* hostname */
     gethostname(hostname, sizeof(hostname));
@@ -565,13 +549,13 @@ int print_metadata(FILE *out, const char *version, int argc,
 
     if (cwd != NULL)
     {
-    	io_metadata_put_json("cwd        ", 1, (const char **) &cwd, out);
-    	free(cwd);
+        io_metadata_put_json("cwd        ", 1, (const char **) &cwd, out);
+        free(cwd);
     }
 
     io_metadata_put_json("sources    ", opts->filecount, opts->files, out);
-    io_metadata_put_json("destination", 1, (const char **) &opts->dest, out);
-    io_metadata_put_json("output     ", 1,(const char**)&opts->outfilename,out);
+    io_metadata_put_json("destination",1,(const char **) &opts->dest, out);
+    io_metadata_put_json("output     ",1,(const char**)&opts->outfilename,out);
 
     if (opts->username != NULL)
         io_metadata_put( "data_owner ", opts->username, out);

@@ -12,6 +12,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/xattr.h>
+#include <linux/limits.h>
 
 #include "io_dcp_processor.h"
 #include "entry.h"
@@ -32,8 +33,12 @@ struct io_dcp_processor_ctx {
     FILE *xattrout; /**< where to write xattr values for paths */
 };
 
+
 /* Private API ****************************************************************/
+
+
 static int process_xattrs(const void *pathmd5, const char *filepath, FILE *out);
+
 
 /* Public Impl ****************************************************************/
 
@@ -52,7 +57,8 @@ int io_dcp_processor(dcp_state_t state, const void *pathmd5,
 }
 
 
-int io_dcp_processor_ctx_create(io_dcp_processor_ctx_t **ctx, FILE *stream, FILE *xattrstream)
+int io_dcp_processor_ctx_create(io_dcp_processor_ctx_t **ctx, FILE *stream,
+        FILE *xattrstream)
 {
     if (ctx != NULL)
     {
@@ -61,7 +67,7 @@ int io_dcp_processor_ctx_create(io_dcp_processor_ctx_t **ctx, FILE *stream, FILE
         (*ctx)->xattrout = xattrstream;
         return 0;
     }
-    return 0;
+    return -1;
 }
 
 
@@ -72,81 +78,46 @@ int io_dcp_processor_ctx_free(io_dcp_processor_ctx_t *ctx)
     return 0;
 }
 
+
 /* Private Impl **************************************************************/
+
+
 int process_xattrs(const void *pathmd5, const char *filepath, FILE *out)
 {
-	char *keys;
-	uint8_t valuebuffer[4096];
-	size_t valuebuffersize = sizeof(valuebuffer);
-	ssize_t bufsize, bufsize2, valuesize;
-	char *next, *end;
-	int retval;
+    char keys[XATTR_LIST_MAX];
+    size_t keysbuffersize = XATTR_LIST_MAX;
+    uint8_t valuebuffer[XATTR_SIZE_MAX];
+    size_t valuebuffersize = XATTR_SIZE_MAX;
+    ssize_t bufsize, valuesize;
+    char *next, *end;
 
-	if (filepath == NULL)
-	{
-		return 0; /* Nothing to do */
-	}
+    if (filepath == NULL)
+        return 0; /* Nothing to do */
 
-	/* Use listxattrs to get a list of */
-	bufsize = llistxattr(filepath, NULL, 0);
-	if (bufsize == -1)
-	{
-		if (errno == ENOTSUP)
-		{
-			/* xattrs not supported or disabled for this file, success */
-			return 0;
-		}
+    if ((bufsize = llistxattr(filepath, keys, keysbuffersize)) == 0)
+        return 0;
+    else if (bufsize < 0)
+    {
+        /* xattrs not supported or disabled for this file, success */
+        if (errno == ENOTSUP)
+            return 0;
+        log_error("llistxattr");
+        return -1;
+    }
 
-		perror("llistxattr");
-		return -1;
-	}
+    end = keys + bufsize; /* pointer to the end of the list */
 
-	if (bufsize == 0)
-	{
-		/* no xattrs to process */
-		return 0;
-	}
+    /* keys is one large string with '\0' delimited names */
+    for (next = keys; next < end; next += (strlen(next) + 1))
+    {
+        memset(valuebuffer, 0, valuebuffersize);
+        valuesize = lgetxattr(filepath, next, valuebuffer, valuebuffersize);
+        if (valuesize < 0)
+            log_error("lgetxattr");
+        else
+            io_entry_write_xattr_fields(pathmd5,next,valuebuffer,valuesize,out);
+    }
 
-	/* NOTE: Not sure if listxattr returns size including the last null byte */
-	keys = NULL;
-	keys = calloc(sizeof(char), bufsize + 1);
-	if (keys == NULL)
-	{
-			perror("calloc");
-			return -1;
-	}
-
-	retval = 0;
-	bufsize2 = llistxattr(filepath, keys, bufsize);
-	if (bufsize2 != bufsize)
-	{
-		/* possible race condition or just an error */
-		perror("llistxattr");
-		retval = -1;
-		goto cleanup;
-	}
-
-	end = keys + bufsize; /* pointer to the end of the list */
-
-	/* Pointer math */
-	for (next = keys; next != end; next += (strlen(next) + 1))
-	{
-		memset(valuebuffer, 0, valuebuffersize); /* zero out the value buffer*/
-		valuesize = lgetxattr(filepath, next, valuebuffer, valuebuffersize);
-		if (valuesize < 0)
-		{
-			perror("lgetxattr");
-		}
-
-		else
-		{
-			io_entry_write_xattr_fields(pathmd5, next, valuebuffer, valuesize, out);
-		}
-	}
-
-	cleanup:
-		free(keys);
-		fflush(out);
-
-	return retval;
+    fflush(out);
+    return 0;
 }

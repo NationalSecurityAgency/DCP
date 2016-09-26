@@ -18,7 +18,7 @@
 #include <time.h>
 #include <linux/limits.h>
 
-#include "jansson.h"
+#include <jansson.h>
 
 #include "io_entry.h"
 #include "../entry.h"
@@ -311,15 +311,16 @@ int io_entry_read(entry_t *entry, FILE *in, size_t *line)
 }
 
 
-/* while jansson can be used for creating a json structure then printing it
+/*
+ * while jansson can be used for creating a json structure then printing it
  * out, there is a large overhead cost. Since we control the data only use
- * jansson to escape the strings we cannot control. */
+ * jansson to escape the strings we cannot control.
+ */
 int io_entry_write_fields(const char *state, const char *path,
-        const struct stat *st, const void *pathmd5, const char *symlinkpath, const void *md5,
-        const void *sha1, const void *sha256, const void *sha512,
-        long elapsed, FILE *stream)
+        const struct stat *st, const void *pathmd5, const char *symlinkpath,
+        const void *md5, const void *sha1, const void *sha256,
+        const void *sha512, long elapsed, FILE *stream)
 {
-
     enum { MAX_LENGTH = PATH_MAX * 4 };
 
     int ret;
@@ -458,7 +459,7 @@ int io_entry_write_fields(const char *state, const char *path,
             goto cleanup;
         }
         unpack(buf, path, len);
-        fprintf(stream, "\"pathhex\":\"%s\",", buf);
+        fprintf(stream, "\"pathhex\":\"%s\"", buf);
     }
 
 

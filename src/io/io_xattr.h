@@ -31,7 +31,8 @@
  *
  * @return              0 on success, -1 on error
  */
-int io_entry_write_xattr_fields(const void *pathmd5, const char *name, void *valuebuffer, ssize_t valuesize, FILE *stream);
+int io_entry_write_xattr_fields(const void *pathmd5, const char *name,
+        void *valuebuffer, ssize_t valuesize, FILE *stream);
 
 
 #endif
