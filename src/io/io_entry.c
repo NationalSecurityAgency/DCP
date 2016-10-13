@@ -18,7 +18,7 @@
 #include <time.h>
 #include <linux/limits.h>
 
-#include "jansson.h"
+#include <jansson.h>
 
 #include "io_entry.h"
 #include "../entry.h"
@@ -117,7 +117,7 @@ int io_entry_read(entry_t *entry, FILE *in, size_t *line)
     } while (buf[0] == '#');
 
 
-    /* for jannson's documentation, JSON_REJECT_DUPLICATES issues an error when
+    /* for jansson's documentation, JSON_REJECT_DUPLICATES issues an error when
      * multiple keys in an object have the same name instead of default
      * behavior which is to use the last defined value */
     if ((obj = json_loads(buf, JSON_REJECT_DUPLICATES, &jerr)) == NULL)
@@ -311,15 +311,16 @@ int io_entry_read(entry_t *entry, FILE *in, size_t *line)
 }
 
 
-/* while jansson can be used for creating a json structure then printing it
+/*
+ * while jansson can be used for creating a json structure then printing it
  * out, there is a large overhead cost. Since we control the data only use
- * jansson to escape the strings we cannot control. */
+ * jansson to escape the strings we cannot control.
+ */
 int io_entry_write_fields(const char *state, const char *path,
-        const struct stat *st, const void *pathmd5, const void *md5,
-        const void *sha1, const void *sha256, const void *sha512,
-        long elapsed, FILE *stream)
+        const struct stat *st, const void *pathmd5, const char *symlinkpath,
+        const void *md5, const void *sha1, const void *sha256,
+        const void *sha512, long elapsed, FILE *stream)
 {
-
     enum { MAX_LENGTH = PATH_MAX * 4 };
 
     int ret;
@@ -328,14 +329,15 @@ int io_entry_write_fields(const char *state, const char *path,
     /* use jansson for string character escaping of paths */
     json_t *escaped;
 
-    /* used to hold hex strings for the hashes and the path if it contains
-     * non utf-8 characters */
+    /*
+     * used to hold hex strings for the hashes and the path if it contains
+     * non utf-8 characters
+     */
     char buf[MAX_LENGTH];
-
 
     ret = 0;
 
-    /* we are writing a json object on the line*/
+    /* we are writing a json object on the line */
     fputc('{', stream);
 
     if (md5 != NULL)
@@ -362,18 +364,26 @@ int io_entry_write_fields(const char *state, const char *path,
         fprintf(stream, "\"sha512\":\"%s\",", buf);
     }
 
+    /*
+     * up till this point we have been appending commas to the end of the
+     * entries, this is because we don't know which hashes are going to be
+     * provided. Now that pathmd5 has been put on the stream we switch to
+     * commas before any new entries, allowing errors to simply exit and not
+     * output malformed json.
+     */
+
     unpack(buf, pathmd5, MD5_DIGEST_LENGTH);
-    fprintf(stream, "\"pathmd5\":\"%s\",", buf);
+    fprintf(stream, "\"pathmd5\":\"%s\"", buf); /* no commas before or after */
 
     if (st != NULL)
     {
         /* mode, size and timestamps */
         fprintf(stream,
-                "\"uid\":%u,\"gid\":%u,"
+                ",\"uid\":%u,\"gid\":%u,"
                 "\"mode\":%u,\"size\":%jd,"
                 "\"asec\":%ld,\"ansec\":%ld,"
                 "\"msec\":%ld,\"mnsec\":%ld,"
-                "\"csec\":%ld,\"cnsec\":%ld,",
+                "\"csec\":%ld,\"cnsec\":%ld",
                 st->st_uid, st->st_gid,
                 st->st_mode, (intmax_t) st->st_size,
                 st->st_atim.tv_sec, st->st_atim.tv_nsec,
@@ -381,7 +391,7 @@ int io_entry_write_fields(const char *state, const char *path,
                 st->st_ctim.tv_sec, st->st_ctim.tv_nsec);
 
         /* extract what type of file from the mode */
-        fprintf(stream, "\"type\":\"%s\",",
+        fprintf(stream, ",\"type\":\"%s\"",
             S_ISREG(st->st_mode)?  "reg"  : S_ISDIR(st->st_mode)?  "dir"  :
             S_ISLNK(st->st_mode)?  "lnk"  : S_ISCHR(st->st_mode)?  "chr"  :
             S_ISBLK(st->st_mode)?  "blk"  : S_ISFIFO(st->st_mode)? "fifo" :
@@ -395,30 +405,54 @@ int io_entry_write_fields(const char *state, const char *path,
         ret = -1;
         goto cleanup;
     }
-    fputs("\"state\":", stream);
+    fputs(",\"state\":", stream);
     json_dumpf(escaped, stream, JSON_ENCODE_ANY);
     json_decref(escaped);
-    fputc(',', stream);
 
     /* # of secs elapsed while processing */
     if (elapsed > -1)
-        fprintf(stream, "\"elapsed\":%ld,", elapsed);
+        fprintf(stream, ",\"elapsed\":%ld", elapsed);
 
-    /* PATH and PATHHEX, we prefer to output PATH which is a valid UTF-8 JSON
-     * escaped string, however if we come across a path with invalid utf-8 we
-     * still need a way to output it. */
+    /* if entry is a symlink we include what its target path was */
+	if (symlinkpath != NULL)
+    {
+        /*
+         * symlinkTarget    valid utf-8 JSON escaped string where pointing
+         * symlinkTargetHex hex encoding of the target if jansson cannot encode
+         */
+        if ((escaped = json_string(symlinkpath)) != NULL)
+        {
+            fputs(",\"symlinkTarget\":", stream);
+            json_dumpf(escaped, stream, JSON_ENCODE_ANY);
+            json_decref(escaped);
+        }
+        else /* jansson was unable to handle the string */
+        {
+            len = strlen(symlinkpath);
+            if ((len * 2 + 1) > MAX_LENGTH)
+            {
+                log_errorx("buffer too small, expected string with length < %d,"
+                        " for non valid utf-8 string: '%s'", MAX_LENGTH,
+                        symlinkpath);
+                ret = -1;
+                goto cleanup;
+            }
+            unpack(buf, symlinkpath, len);
+            fprintf(stream, ",\"symlinkTargetHex\":\"%s\"", buf);
+        }
+    }
+
+    /*
+     * path     valid utf-8 JSON escaped path to the file
+     * pathHex  hex encoding of the path, provided if jansson cannot encode
+     */
     if ((escaped = json_string(path)) != NULL)
     {
-        fputs("\"path\":", stream);
-
-        /*
-         * JSON_ENCODE_ANY  tell jansson to write any json type to stream not
-         *                  just Objects and Arrays
-         */
+        fputs(",\"path\":", stream);
         json_dumpf(escaped, stream, JSON_ENCODE_ANY);
         json_decref(escaped);
     }
-    else /* jansson was unable to handle the string, */
+    else /* jansson was unable to handle the string */
     {
         len = strlen(path);
         if ((len * 2 + 1) > MAX_LENGTH)
@@ -429,8 +463,9 @@ int io_entry_write_fields(const char *state, const char *path,
             goto cleanup;
         }
         unpack(buf, path, len);
-        fprintf(stream, "\"pathhex\":\"%s\",", buf);
+        fprintf(stream, ",\"pathhex\":\"%s\"", buf);
     }
+
 
 cleanup:
     /* print a newline our record separator */

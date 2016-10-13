@@ -19,13 +19,16 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <malloc.h>
+#include <sys/xattr.h>
+#include <stdio.h>
+
 #include "process.h"
 #include "../digest.h"
 #include "../fd.h"
 #include "../index/index.h"
 #include "../logging.h"
 #include "dcp.h"
-
 
 /* Type Defs ******************************************************************/
 
@@ -103,7 +106,7 @@ static int copy_fd(int dirfd, const char *pathname, struct stream *stream,
  *
  * @return          number of bytes that are valid in buf, -1 on error
  */
-static ssize_t cache_n_digest(digesterset_t *set, int fd, void *buf, 
+static ssize_t cache_n_digest(digesterset_t *set, int fd, void *buf,
         size_t blen);
 
 /**
@@ -160,8 +163,8 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
     if ((s = open(oldpath, O_RDONLY)) == -1)
     {
         log_error("cannot open '%s'", oldpath);
-        opts->callback(DCP_FAILED, pathmd5, dapath, oldst, NULL, NULL, NULL,
-                NULL, -1, opts->callback_ctx);
+        opts->callback(DCP_FAILED, pathmd5, dapath, oldst, oldpath, NULL, NULL,
+                NULL, NULL, NULL, -1, opts->callback_ctx);
         return -1;
     }
 
@@ -170,8 +173,10 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
     /* ensure we create the hash needed for the and index */
     digesterset_create(&dgstset, opts->digests | idxkeytype);
 
-    /* there is no index to check against, just copy and digest at the same
-     * time */
+    /*
+     * there is no index to check against, just copy and digest at the same
+     * time
+     */
     if (opts->index == NULL)
     {
         valid_len = copy_n_digest(newdir->fd, newpath, opts->uid, opts->gid,
@@ -180,8 +185,8 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
         if (valid_len < 0)
         {
             log_debugx("failed copying and hashing '%s'", oldpath);
-            opts->callback(DCP_FAILED, pathmd5, dapath, oldst, NULL, NULL,
-                    NULL, NULL, -1, opts->callback_ctx);
+            opts->callback(DCP_FAILED, pathmd5, dapath, oldst, oldpath, NULL,
+                    NULL, NULL, NULL, NULL, -1, opts->callback_ctx);
             ret = -1;
             goto cleanup;
         }
@@ -192,7 +197,7 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
         diff = ((clock() - start) * 1000) / CLOCKS_PER_SEC;
 
         /* finally send the information to the file processor */
-        opts->callback(DCP_FILE_COPIED, pathmd5, dapath, oldst,
+        opts->callback(DCP_FILE_COPIED, pathmd5, dapath, oldst, oldpath, NULL,
                 digesterset_get_value(&dgstset, DGST_MD5),
                 digesterset_get_value(&dgstset, DGST_SHA1),
                 digesterset_get_value(&dgstset, DGST_SHA256),
@@ -202,14 +207,13 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
     }
     else
     {
-
         /* read in the file and calculate the desired digests */
         if ((valid_len = cache_n_digest(&dgstset, s, opts->buffer,
                 opts->buffer_size)) == -1)
         {
             log_debugx("cannot calculate hashes for '%s'", oldpath);
-            opts->callback(DCP_FAILED, pathmd5, dapath, oldst, NULL, NULL,
-                    NULL, NULL, -1, opts->callback_ctx);
+            opts->callback(DCP_FAILED, pathmd5, dapath, oldst, oldpath, NULL,
+                    NULL, NULL, NULL, NULL, -1, opts->callback_ctx);
             ret = -1;
             goto cleanup;
         }
@@ -226,8 +230,8 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
                 ret = -1;
                 goto cleanup;
 
+            /* we have seen this file, skip it */
             case INDEX_SUCCESS:
-                /* we have seen this file, skip it */
                 ret = 0;        /* set ret to success */
                 goto cleanup;
 
@@ -236,9 +240,11 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
             }
         }
 
-        /* if cache_n_digest was able to store the whole file in the buffer then
+        /*
+         * if cache_n_digest was able to store the whole file in the buffer then
          * we do not need to seek to the beginning of the fd and reread the
-         * bytes */
+         * bytes
+         */
         if (valid_len == oldst->st_size)
         {
             datastream.bytes = opts->buffer;
@@ -259,7 +265,7 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
         diff = ((clock() - start) * 1000) / CLOCKS_PER_SEC;
 
         /* finally send the information to the file processor */
-        opts->callback(state, pathmd5, dapath, oldst,
+        opts->callback(state, pathmd5, dapath, oldst, oldpath, NULL,
                 digesterset_get_value(&dgstset, DGST_MD5),
                 digesterset_get_value(&dgstset, DGST_SHA1),
                 digesterset_get_value(&dgstset, DGST_SHA256),
@@ -280,7 +286,7 @@ int process_regular(file_t *newdir, const char *newpath, const char *oldpath,
 /* Private Impl ***************************************************************/
 
 
-int copy_fd(int dirfd, const char *pathname, struct stream *stream, uid_t uid, 
+int copy_fd(int dirfd, const char *pathname, struct stream *stream, uid_t uid,
         gid_t gid)
 {
     int d;

@@ -21,6 +21,8 @@ option  "output"     o   "where to write output" string  typestr="FILE" optional
 option  "input"      i   "output from a previous run to check for uniqueness"
     string  typestr="FILE"  optional    multiple
 
+option  "xattr"      x   "where to write eXtended ATTRibutes" string typestr="FILE" optional
+
 option  "owner"      O   "username to chown new files/dirs" 
     string  typestr="USER"  optional
     

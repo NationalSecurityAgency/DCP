@@ -120,9 +120,11 @@ int dcp(const char *newpath, const char *src[], size_t srcc,
     dapath = NULL;
     destpath = NULL;
 
-    /* dest is the directory to clone every entry in, if newpath is an
+    /*
+     * dest is the directory to clone every entry in, if newpath is an
      * existing directory dest represents that, otherwise it is the parent
-     * of the file/directory to create */
+     * of the file/directory to create
+     */
     if (initdestandpaths(&destroot,path,&destpath,&dapath,sanitized,srcc) != 0)
     {
         free(path);
@@ -168,7 +170,8 @@ int dcp(const char *newpath, const char *src[], size_t srcc,
         if (do_append(ent, &destroot, sanitized))
             strcat(strcat(path, "/"), ent->fts_name);
 
-        /* unfortunatly we have two cases where dapath wont be set right
+        /*
+         * unfortunatly we have two cases where dapath wont be set right
          *  1. cp a dir to a dir that dne: report dapath as "/"
          *  2. cp a file to a path that dne: report dapath as "/$filename"
          */
@@ -374,8 +377,9 @@ void process(file_t *newdir, const char *newpath, FTSENT *ent,
             state  = DCP_DIR_FAILED;
         }
 
-        popts->callback(state, pathmd5, dapath, ent->fts_statp, NULL, NULL,
-                NULL, NULL, -1, popts->callback_ctx);
+        popts->callback(state, pathmd5, dapath, ent->fts_statp,
+                ent->fts_accpath, NULL, NULL, NULL, NULL, NULL, -1,
+                popts->callback_ctx);
         break;
     }
 
@@ -417,7 +421,7 @@ void process(file_t *newdir, const char *newpath, FTSENT *ent,
     case FTS_ERR:
     {
         popts->callback(DCP_FAILED, pathmd5, dapath, NULL, NULL, NULL, NULL,
-                NULL, -1, popts->callback_ctx);
+                NULL, NULL, NULL, -1, popts->callback_ctx);
         errno = ent->fts_errno;
         log_error("fts_read '%s'", ent->fts_path);
         break;
@@ -426,7 +430,7 @@ void process(file_t *newdir, const char *newpath, FTSENT *ent,
     case FTS_NS:
     {
         popts->callback(DCP_FAILED, pathmd5, dapath, NULL, NULL, NULL, NULL,
-                NULL, -1, popts->callback_ctx);
+                NULL, NULL, NULL, -1, popts->callback_ctx);
         errno = ent->fts_errno;
         log_error("cannot stat '%s'", ent->fts_path);
         break;
@@ -435,7 +439,7 @@ void process(file_t *newdir, const char *newpath, FTSENT *ent,
     case FTS_DNR:
     {
         popts->callback(DCP_FAILED, pathmd5, dapath, NULL, NULL, NULL, NULL,
-                NULL, -1, popts->callback_ctx);
+                NULL, NULL, NULL, -1, popts->callback_ctx);
         errno = ent->fts_errno;
         log_error("cannot read dir '%s'", ent->fts_path);
         break;

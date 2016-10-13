@@ -53,7 +53,8 @@ typedef enum {
  * calculated.
  */
 typedef int (*dcp_callback_f)(dcp_state_t state, const void *pathmd5,
-        const char *path, const struct stat *sstat, const void *md5,
+        const char *dapath, const struct stat *sstat, const char *accesspath,
+        const char *symlinkpath, const void *md5,
         const void *sha1, const void *sha256, const void *sha512,
         unsigned long process_time, void *context);
 

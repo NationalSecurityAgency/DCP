@@ -34,11 +34,12 @@ typedef struct io_dcp_processor_ctx io_dcp_processor_ctx_t;
  * An dcp callback function which writes each file/dir/dev to the configured
  * FILE stream. Outputs each entry using @see io_entry.h.
  *
- * @param state             the resulting state of dcp processing,
- * 							@see impl/dcp.h
- * @param path              mount relative path to the file to be copied
+ * @param state             the resulting state of processing, @see impl/dcp.h
+ * @param pathmd5           the md5 sum of the file's dapath
+ * @param dapath            mount relative path to the file to be copied
  * @param st                stat struct for the source file
- * @param dpath             where the file is being copied to
+ * @param accesspath        path to the original file
+ * @param symlinkpath       if file is a symbolic link, where is it pointing
  * @param md5               md5 digest of the file
  * @param sha1              sha1 digest of the file
  * @param sha256            sha256 digest of the file
@@ -50,9 +51,10 @@ typedef struct io_dcp_processor_ctx io_dcp_processor_ctx_t;
  * @return                  0 on success
  */
 int io_dcp_processor(dcp_state_t state, const void *pathmd5,
-        const char *path, const struct stat *st, const void *md5,
-        const void *sha1, const void *sha256, const void *sha512,
-        unsigned long process_time, void *context);
+        const char *dapath, const struct stat *st, const char *accesspath,
+        const char *symlinkpath, const void *md5, const void *sha1,
+        const void *sha256, const void *sha512, unsigned long process_time,
+        void *context);
 
 
 /**
@@ -60,10 +62,12 @@ int io_dcp_processor(dcp_state_t state, const void *pathmd5,
  *
  * @param ctx               pointer to the context to initialize
  * @param stream            where to serialize the entries to.
+ * @param xattrstream       where to serialize the extended attributes to
  *
  * @return                  0 on success
  */
-int io_dcp_processor_ctx_create(io_dcp_processor_ctx_t **ctx, FILE *stream);
+int io_dcp_processor_ctx_create(io_dcp_processor_ctx_t **ctx, FILE *stream,
+        FILE *xattrstream);
 
 
 /**

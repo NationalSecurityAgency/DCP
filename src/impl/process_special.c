@@ -40,7 +40,7 @@ int process_special(file_t *newdir, const char *newpath, const char *oldpath,
     if (r == 0 && fchownat(newdir->fd, newpath, opts->uid, opts->gid, 0) != 0)
         log_warn("cannot chown '%s'", pathstr(newdir, newpath));
 
-    opts->callback(state, pathmd5, dapath, oldst, NULL, NULL, NULL, NULL, -1,
+    opts->callback(state, pathmd5, dapath, oldst, oldpath, NULL, NULL, NULL, NULL, NULL, -1,
             opts->callback_ctx);
     return r;
 }

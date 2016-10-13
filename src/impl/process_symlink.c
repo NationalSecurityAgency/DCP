@@ -14,6 +14,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <stdio.h>
+
 #include "process.h"
 #include "../logging.h"
 #include "dcp.h"
@@ -72,7 +74,7 @@ int process_symlink(file_t *newdir, const char *newpath, const char *oldpath,
             }
         }
     }
-    opts->callback(state, pathmd5, dapath, oldst, NULL, NULL, NULL, NULL, -1,
+    opts->callback(state, pathmd5, dapath, oldst, oldpath, buf, NULL, NULL, NULL, NULL, -1,
             opts->callback_ctx);
 
     /* if we allocated a new buffer free it */
