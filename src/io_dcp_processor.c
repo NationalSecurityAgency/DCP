@@ -115,7 +115,7 @@ int process_xattrs(const void *pathmd5, const char *filepath, FILE *out)
         if (valuesize < 0)
             log_error("lgetxattr");
         else
-            io_entry_write_xattr_fields(pathmd5,next,valuebuffer,valuesize,out);
+            io_entry_write_xattr_fields(pathmd5,next,valuebuffer,valuesize-1,out);
     }
 
     fflush(out);
