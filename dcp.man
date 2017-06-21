@@ -1,4 +1,4 @@
-﻿.TH DCP 1
+.TH DCP 1
 .SH NAME
 dcp \- copy and profile files and directories
 .SH SYNOPSIS
@@ -16,9 +16,11 @@ hash to be copied.
 .BR \-a ", "\-\-all
 same as \fB\-stu\fP
 .TP
+.BR \-h ", "\-\-help
+Print help and exit
+.TP
 .BR \-m ", "\-\-md5
-calculate the md5 hash for all regular files. If \fB\-h\fP is specified the md5
-will be calculated
+calculate the md5 hash for all regular files. 
 .TP
 .BR \-s ", "\-\-sha1
 calculate the sha1 hash for all regular files
