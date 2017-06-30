@@ -27,6 +27,20 @@ then
 	AC_MSG_ERROR([jannson library not installed.  Try 'apt-get install libjansson-dev' or whatever package manager you happen to be using...])
 fi
 
+a=1
+AC_CHECK_HEADER(openssl/md5.h, [], [a=0])
+if test $a == 0
+then
+	AC_MSG_ERROR([ssl headers not install.  Try 'apt-get install libssl-dev'])
+fi
+
+a=1
+AC_CHECK_HEADER(db.h, [], [a=0])
+if test $a == 0
+then
+	AC_MSG_ERROR([Berkeley DB headers not installed. Try 'apt-get install libdb-dev'])
+fi
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_UID_T
 AC_C_INLINE
