@@ -13,5 +13,5 @@ Compile and Install:
 
 Libraries that need to be installed:
 
-	libcrypto	 - From OpenSSL
+	libcrypto    - From OpenSSL
 	libdb-5.3    - Berkeley DB 5.3
