@@ -71,7 +71,7 @@ int io_entry_write_xattr_fields(const void *pathmd5, const char *name,
         fputs(",\"xattrValue\":\"", stream);
         /*
          * base64 encoding
-         * https://www.openssl.org/docs/manmaster/crypto/BIO_f_base64.html
+         * https://www.openssl.org/docs/manmaster/man3/BIO_f_base64.html
          */
         b64 = BIO_new(BIO_f_base64());
         BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL); /* do not append newline */
