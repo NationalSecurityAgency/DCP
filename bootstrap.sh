@@ -17,7 +17,7 @@ GENGETOPT=$(which gengetopt)
 if [[ ! -e $GENGETOPT ]]
 then 
     echo "gengetopt required to prepare source"
-    exit
+    exit 1
 fi
 $GENGETOPT --unamed-opts -a cmdline_info -F cmdline --output-dir=src/          \
     -i option_parser.ggo --set-version=$(tr -d '\n' < VERSION)
