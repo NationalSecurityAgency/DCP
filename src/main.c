@@ -48,6 +48,13 @@
 #define ENV_GROUP           "DCP_GROUP"
 #define ENV_CACHE_SIZE      "DCP_CACHE_SIZE"
 
+/*
+ * Cache default values
+ */
+#define CACHE_DEFAULT_SIZE      32768
+#define CACHE_BLOCK_SIZE        1024
+#define CACHE_DOUBLE_BLOCK_SIZE 1024*1024
+#define CACHE_TRIPLE_BLOCK_SIZE 1024*1024*1024
 
 /* Type Defs ******************************************************************/
 
@@ -149,7 +156,7 @@ size_t parse_cache_size(const struct cmdline_info *info)
     const char *val;
     char *end;
 
-    size = 32768; /* default if not specified */
+    size = CACHE_DEFAULT_SIZE; /* default if not specified */
 
     val = getenv(ENV_CACHE_SIZE);
     if (info->cache_size_given)
@@ -164,10 +171,10 @@ size_t parse_cache_size(const struct cmdline_info *info)
 
     switch (*end)
     {
-    case '\0':                                              break;
-    case 'k':  case 'K':    size *= 1024;                   break;
-    case 'm':  case 'M':    size *= (1024 * 1024);          break;
-    case 'g':  case 'G':    size *= (1024 * 1024 * 1024);   break;
+    case '\0':                                               break;
+    case 'k':  case 'K':    size *= CACHE_BLOCK_SIZE;        break;
+    case 'm':  case 'M':    size *= CACHE_DOUBLE_BLOCK_SIZE; break;
+    case 'g':  case 'G':    size *= CACHE_TRIPLE_BLOCK_SIZE  break;
     default:
         log_critx(EXIT_FAILURE, "invalid cache suffix: '%s'", val);
     }
