@@ -14,7 +14,7 @@
 
 #include <stdio.h>
 
-#include "../index/index.h"
+#include "index.h"
 
 
 /* Public API *****************************************************************/

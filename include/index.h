@@ -19,7 +19,7 @@
 #include <stddef.h>
 #include <linux/limits.h>
 
-#include "../digest.h"
+#include "digest.h"
 
 
 /* Type Defs ******************************************************************/

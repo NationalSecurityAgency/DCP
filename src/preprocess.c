@@ -16,7 +16,7 @@
 #include <unistd.h>
 
 #include "process.h"
-#include "../logging.h"
+#include "logging.h"
 
 
 /* Static Vars ****************************************************************/

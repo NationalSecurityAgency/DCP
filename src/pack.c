@@ -13,7 +13,7 @@
 #include <string.h>
 
 #include "pack.h"
-#include "../logging.h"
+#include "logging.h"
 
 
 /* MACROS *********************************************************************/

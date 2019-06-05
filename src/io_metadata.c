@@ -14,7 +14,7 @@
 
 #include "io_metadata.h"
 #include "jansson.h"
-#include "../logging.h"
+#include "logging.h"
 
 
 /* Private API ****************************************************************/

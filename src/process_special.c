@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 #include "process.h"
-#include "../logging.h"
+#include "logging.h"
 #include "dcp.h"
 
 

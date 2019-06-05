@@ -18,7 +18,7 @@
 #include <time.h>
 #include <sys/types.h>
 
-#include "../entry.h"
+#include "entry.h"
 
 
 /* Public API *****************************************************************/

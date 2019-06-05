@@ -21,10 +21,10 @@
 #include <jansson.h>
 
 #include "io_entry.h"
-#include "../entry.h"
-#include "../digest.h"
+#include "entry.h"
+#include "digest.h"
 #include "pack.h"
-#include "../logging.h"
+#include "logging.h"
 
 
 /* MACROS *********************************************************************/

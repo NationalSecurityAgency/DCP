@@ -21,9 +21,9 @@
 #include <openssl/evp.h>
 
 #include "io_xattr.h"
-#include "../digest.h"
+#include "digest.h"
 #include "pack.h"
-#include "../logging.h"
+#include "logging.h"
 
 
 /* Public Impl ****************************************************************/
