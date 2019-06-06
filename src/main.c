@@ -40,6 +40,13 @@
 
 /* MACROS *********************************************************************/
 
+/*
+ * Autoconf requires that the package version not be a string literal, so this
+ * macro uses the classic "pasting" trick to convert the passed-in argument into
+ * a string literal. Without this macro, the compiler throws an error, complain-
+ * ing about a number with too many decimal points.
+ */
+#define PROGRAM_VERSION(V) #V
 
 /*
  * Environment Variable names dcp responds to
@@ -380,8 +387,8 @@ int dcp_main(const struct mainopts *opts, int argc, const char *argv[])
     }
 
     /* output information about this run of dcp */
-    print_metadata(opts->outputstream, VERSION, argc, argv, opts, digests);
-    print_metadata(opts->xattroutputstream, VERSION, argc, argv, opts, digests);
+    print_metadata(opts->outputstream, PROGRAM_VERSION(VERSION), argc, argv, opts, digests);
+    print_metadata(opts->xattroutputstream, PROGRAM_VERSION(VERSION), argc, argv, opts, digests);
 
     /* setup how and where to send the data gathered during this run */
     if (io_dcp_processor_ctx_create(&ctx, opts->outputstream, opts->xattroutputstream) == -1)

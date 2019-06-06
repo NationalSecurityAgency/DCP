@@ -1,0 +1,11 @@
+
+# Autotools Output
+config.log
+config.status
+
+# Autotools Cache
+autom4ate.cache/
+
+# Target Executable
+dcp
+
