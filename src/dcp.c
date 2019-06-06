@@ -24,8 +24,8 @@
 #include <unistd.h>
 
 #include "dcp.h"
-#include "../index/index.h"
-#include "../logging.h"
+#include "index.h"
+#include "logging.h"
 
 #include "process.h"
 

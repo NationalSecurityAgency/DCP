@@ -4,9 +4,9 @@
 
 #include "io_index.h"
 #include "io_entry.h"
-#include "../digest.h"
-#include "../index/index.h"
-#include "../logging.h"
+#include "digest.h"
+#include "index.h"
+#include "logging.h"
 
 
 /* Private API ****************************************************************/

@@ -14,7 +14,7 @@
 
 
 #include <sys/stat.h>
-#include "impl/dcp.h"
+#include "dcp.h"
 
 
 /* Type Defs ******************************************************************/
@@ -34,7 +34,7 @@ typedef struct io_dcp_processor_ctx io_dcp_processor_ctx_t;
  * An dcp callback function which writes each file/dir/dev to the configured
  * FILE stream. Outputs each entry using @see io_entry.h.
  *
- * @param state             the resulting state of processing, @see impl/dcp.h
+ * @param state             the resulting state of processing, @see dcp.h
  * @param pathmd5           the md5 sum of the file's dapath
  * @param dapath            mount relative path to the file to be copied
  * @param st                stat struct for the source file

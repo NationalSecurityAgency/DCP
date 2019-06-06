@@ -19,8 +19,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "../digest.h"
-#include "../index/index.h"
+#include "digest.h"
+#include "index.h"
 #include "dcp.h"
 
 

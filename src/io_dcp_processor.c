@@ -16,8 +16,8 @@
 
 #include "io_dcp_processor.h"
 #include "entry.h"
-#include "io/io.h"
-#include "impl/dcp.h"
+#include "io.h"
+#include "dcp.h"
 #include "logging.h"
 
 

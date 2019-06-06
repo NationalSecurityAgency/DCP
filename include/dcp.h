@@ -25,7 +25,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "../index/index.h"
+#include "index.h"
 
 
 /* Type Defs ******************************************************************/

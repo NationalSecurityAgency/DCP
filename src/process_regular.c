@@ -24,10 +24,10 @@
 #include <stdio.h>
 
 #include "process.h"
-#include "../digest.h"
-#include "../fd.h"
-#include "../index/index.h"
-#include "../logging.h"
+#include "digest.h"
+#include "fd.h"
+#include "index.h"
+#include "logging.h"
 #include "dcp.h"
 
 /* Type Defs ******************************************************************/

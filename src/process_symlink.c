@@ -17,7 +17,7 @@
 #include <stdio.h>
 
 #include "process.h"
-#include "../logging.h"
+#include "logging.h"
 #include "dcp.h"
 
 

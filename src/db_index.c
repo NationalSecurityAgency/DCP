@@ -15,9 +15,9 @@
 #include <db.h>
 
 #include "index.h"
-#include "../digest.h"
-#include "../logging.h"
-#include "../io/pack.h"
+#include "digest.h"
+#include "logging.h"
+#include "pack.h"
 
 
 /* Type Defs ******************************************************************/
